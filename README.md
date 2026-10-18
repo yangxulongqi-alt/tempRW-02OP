@@ -7,7 +7,10 @@
   <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="MIT License">
 </p>
 
-RW-02OP 是一款双足轮足复合移动机器人,集成 MuJoCo 仿真、LQR 最优控制与实时 EtherCAT 电机驱动,支持站立、坡道上下、台阶跨越、单边行进等多种运动模式。
+RW-02OP 是一款双足轮足复合移动机器人，集成 MuJoCo 仿真、LQR 最优控制与实时 EtherCAT 电机驱动,支持站立、坡道上下、台阶跨越、单边行进等多种运动模式。
+
+> **归属:** 本项目属于 [成都人形机器人创新中心](https://www.ruidiculous.com/)。
+> **注意:** 本仓库为临时库,如需删除或转为私有,请联系仓库所有者。
 
 ## 功能演示
 
@@ -119,7 +122,7 @@ YSF650 惯性测量单元驱动,提供六轴姿态数据,用于平衡控制闭�
 ## 许可证
 
 本项目的控制器软件代码采用 [MIT License](RW-02OP_OpenWBipedController/license.md)。
-硬件文档及结构文件版权归作者所有。
+硬件文档及结构文件版权归版权所有人所有。
 
 ## 存储库优化建议
 
