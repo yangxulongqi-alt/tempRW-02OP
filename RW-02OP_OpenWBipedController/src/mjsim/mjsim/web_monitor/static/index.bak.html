@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ROS2 Web Monitor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Consolas, monospace;
+            background: #1a1a2e;
+            color: #eee;
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: #16213e;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #0f3460;
+        }
+        
+        .header h1 {
+            font-size: 1.4em;
+            color: #00d9ff;
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ff4444;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-dot.connected {
+            background: #00ff88;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .container {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 15px;
+            padding: 15px;
+            height: calc(100vh - 60px);
+        }
+        
+        .panel {
+            background: #16213e;
+            border-radius: 8px;
+            border: 1px solid #0f3460;
+            overflow: hidden;
+        }
+        
+        .panel-header {
+            background: #0f3460;
+            padding: 10px 15px;
+            font-weight: bold;
+            color: #00d9ff;
+            font-size: 0.9em;
+        }
+        
+        .panel-content {
+            padding: 12px;
+        }
+        
+        /* 左侧状态列 */
+        .left-column {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            overflow-y: auto;
+        }
+        
+        /* 右侧控制区 */
+        .right-column {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        /* 信息项 */
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid #0f3460;
+        }
+        
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        
+        .info-label {
+            color: #888;
+            font-size: 0.85em;
+        }
+        
+        .info-value {
+            color: #00ff88;
+            font-family: Consolas, monospace;
+            font-size: 0.9em;
+        }
+        
+        .info-value.warning {
+            color: #ffaa00;
+        }
+        
+        .info-value.error {
+            color: #ff4444;
+        }
+        
+        /* Domain ID 特殊样式 */
+        .domain-id {
+            font-size: 2em;
+            color: #00d9ff;
+            text-align: center;
+            padding: 10px;
+        }
+        
+        /* IMU数据网格 */
+        .imu-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            text-align: center;
+        }
+        
+        .imu-item {
+            background: #1a1a2e;
+            padding: 8px;
+            border-radius: 4px;
+        }
+        
+        .imu-item .label {
+            font-size: 0.75em;
+            color: #666;
+            margin-bottom: 4px;
+        }
+        
+        .imu-item .value {
+            font-family: Consolas, monospace;
+            color: #00ff88;
+            font-size: 0.9em;
+        }
+        
+        /* 关节表格 */
+        .joint-table {
+            width: 100%;
+            font-size: 0.8em;
+        }
+        
+        .joint-table th {
+            background: #0f3460;
+            padding: 6px 4px;
+            text-align: left;
+            color: #00d9ff;
+            position: sticky;
+            top: 0;
+        }
+        
+        .joint-table td {
+            padding: 4px;
+            border-bottom: 1px solid #0f3460;
+            font-family: Consolas, monospace;
+        }
+        
+        .joint-table tr:hover {
+            background: #1a1a2e;
+        }
+        
+        .joints-scroll {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        /* 控制按钮 */
+        .control-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            max-width: 300px;
+            margin: 0 auto;
+        }
+        
+        .control-btn {
+            padding: 20px;
+            font-size: 1.2em;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #0f3460;
+            color: #fff;
+            transition: all 0.2s;
+        }
+        
+        .control-btn:hover {
+            background: #00d9ff;
+            color: #000;
+        }
+        
+        .control-btn:active {
+            transform: scale(0.95);
+            background: #00ff88;
+        }
+        
+        .control-btn.empty {
+            visibility: hidden;
+        }
+
+        /* 虚拟手柄 */
+        .joystick-container {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .joystick-area {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            background: #1a1a2e;
+            border-radius: 50%;
+            border: 2px solid #0f3460;
+        }
+        
+        .joystick-knob {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: radial-gradient(circle at 30% 30%, #00d9ff, #0066aa);
+            border-radius: 50%;
+            top: 50px;
+            left: 50px;
+            cursor: grab;
+            box-shadow: 0 4px 15px rgba(0, 217, 255, 0.4);
+            transition: box-shadow 0.2s;
+        }
+        
+        .joystick-knob:active {
+            cursor: grabbing;
+            box-shadow: 0 2px 10px rgba(0, 217, 255, 0.6);
+        }
+        
+        .joystick-knob.active {
+            background: radial-gradient(circle at 30% 30%, #00ff88, #00aa44);
+        }
+        
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 200px;
+        }
+        
+        .slider-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .slider-item label {
+            font-size: 0.8em;
+            color: #888;
+        }
+        
+        .slider-item input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: #1a1a2e;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        .slider-item input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #00d9ff;
+            cursor: pointer;
+        }
+        
+        .slider-value {
+            text-align: center;
+            font-family: Consolas, monospace;
+            color: #00ff88;
+            font-size: 0.9em;
+        }
+        
+        .joy-display {
+            text-align: center;
+            padding: 10px;
+            background: #1a1a2e;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        
+        .joy-display span {
+            font-family: Consolas, monospace;
+            color: #00ff88;
+        }
+        
+        /* 命令区 */
+        .cmd-input {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .cmd-input input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #0f3460;
+            border-radius: 4px;
+            background: #1a1a2e;
+            color: #fff;
+            font-family: Consolas, monospace;
+        }
+        
+        .cmd-input button {
+            padding: 10px 20px;
+            background: #00d9ff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .cmd-input button:hover {
+            background: #00ff88;
+        }
+        
+        /* 快捷命令 */
+        .quick-cmds {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        .quick-cmd {
+            padding: 8px 15px;
+            background: #0f3460;
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+        
+        .quick-cmd:hover {
+            background: #00d9ff;
+            color: #000;
+        }
+        
+        /* 日志区 */
+        .log-area {
+            background: #0d0d1a;
+            border-radius: 4px;
+            padding: 10px;
+            height: 150px;
+            overflow-y: auto;
+            font-family: Consolas, monospace;
+            font-size: 0.8em;
+        }
+        
+        .log-entry {
+            padding: 2px 0;
+            color: #888;
+        }
+        
+        .log-entry.info { color: #00d9ff; }
+        .log-entry.success { color: #00ff88; }
+        .log-entry.warning { color: #ffaa00; }
+        .log-entry.error { color: #ff4444; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🤖 ROS2 Web Monitor</h1>
+        <div class="status-indicator">
+            <span id="ws-status">Disconnected</span>
+            <div class="status-dot" id="status-dot"></div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <!-- 左侧状态列 -->
+        <div class="left-column">
+            <!-- Domain ID -->
+            <div class="panel">
+                <div class="panel-header">📡 ROS Domain</div>
+                <div class="panel-content">
+                    <div class="info-row">
+                        <span class="info-label">Domain ID</span>
+                        <span class="domain-id" id="domain-id">--</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Controller State</span>
+                        <span class="info-value" id="ctrl-state">unknown</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- IMU状态 -->
+            <div class="panel">
+                <div class="panel-header">🧭 IMU Data</div>
+                <div class="panel-content">
+                    <div style="margin-bottom: 10px; color: #888; font-size: 0.8em;">Orientation (Quaternion)</div>
+                    <div class="imu-grid">
+                        <div class="imu-item"><div class="label">X</div><div class="value" id="imu-ox">0.000</div></div>
+                        <div class="imu-item"><div class="label">Y</div><div class="value" id="imu-oy">0.000</div></div>
+                        <div class="imu-item"><div class="label">Z</div><div class="value" id="imu-oz">0.000</div></div>
+                    </div>
+                    <div class="imu-grid" style="margin-top: 5px;">
+                        <div class="imu-item" style="grid-column: span 3;"><div class="label">W</div><div class="value" id="imu-ow">1.000</div></div>
+                    </div>
+                    
+                    <div style="margin: 15px 0 10px 0; color: #888; font-size: 0.8em;">Angular Velocity (rad/s)</div>
+                    <div class="imu-grid">
+                        <div class="imu-item"><div class="label">X</div><div class="value" id="imu-wx">0.000</div></div>
+                        <div class="imu-item"><div class="label">Y</div><div class="value" id="imu-wy">0.000</div></div>
+                        <div class="imu-item"><div class="label">Z</div><div class="value" id="imu-wz">0.000</div></div>
+                    </div>
+                    
+                    <div style="margin: 15px 0 10px 0; color: #888; font-size: 0.8em;">Linear Acceleration (m/s²)</div>
+                    <div class="imu-grid">
+                        <div class="imu-item"><div class="label">X</div><div class="value" id="imu-ax">0.000</div></div>
+                        <div class="imu-item"><div class="label">Y</div><div class="value" id="imu-ay">0.000</div></div>
+                        <div class="imu-item"><div class="label">Z</div><div class="value" id="imu-az">0.000</div></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 关节状态 -->
+            <div class="panel" style="flex: 1;">
+                <div class="panel-header">🦿 Joint States (<span id="joint-count">0</span> joints)</div>
+                <div class="panel-content">
+                    <div class="joints-scroll">
+                        <table class="joint-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Position</th>
+                                    <th>Velocity</th>
+                                </tr>
+                            </thead>
+                            <tbody id="joint-tbody">
+                                <tr><td colspan="3" style="text-align: center; color: #666;">No data</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 右侧控制区 -->
+        <div class="right-column">
+            <!-- Joy控制 -->
+            <div class="panel">
+                <div class="panel-header">🎮 Joy Control (Virtual Gamepad)</div>
+                <div class="panel-content">
+                    <div class="joystick-container">
+                        <!-- 左摇杆 -->
+                        <div>
+                            <div style="text-align: center; color: #888; font-size: 0.8em; margin-bottom: 8px;">Left Stick (Move)</div>
+                            <div class="joystick-area" id="joystick-left">
+                                <div class="joystick-knob" id="knob-left"></div>
+                            </div>
+                        </div>
+                        <!-- 右摇杆 -->
+                        <div>
+                            <div style="text-align: center; color: #888; font-size: 0.8em; margin-bottom: 8px;">Right Stick (Turn)</div>
+                            <div class="joystick-area" id="joystick-right">
+                                <div class="joystick-knob" id="knob-right"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 滑块控制 -->
+                    <div style="margin-top: 20px;">
+                        <div style="color: #888; font-size: 0.8em; margin-bottom: 10px;">Axis Sliders</div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div class="slider-item">
+                                <label>Axis 0 (X): <span class="slider-value" id="slider-val-0">0.00</span></label>
+                                <input type="range" id="slider-0" min="-1" max="1" step="0.01" value="0">
+                            </div>
+                            <div class="slider-item">
+                                <label>Axis 1 (Y): <span class="slider-value" id="slider-val-1">0.00</span></label>
+                                <input type="range" id="slider-1" min="-1" max="1" step="0.01" value="0">
+                            </div>
+                            <div class="slider-item">
+                                <label>Axis 2: <span class="slider-value" id="slider-val-2">0.00</span></label>
+                                <input type="range" id="slider-2" min="-1" max="1" step="0.01" value="0">
+                            </div>
+                            <div class="slider-item">
+                                <label>Axis 3: <span class="slider-value" id="slider-val-3">0.00</span></label>
+                                <input type="range" id="slider-3" min="-1" max="1" step="0.01" value="0">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="joy-display">
+                        Axes: [<span id="joy-ax0">0.00</span>, <span id="joy-ax1">0.00</span>, <span id="joy-ax2">0.00</span>, <span id="joy-ax3">0.00</span>]
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 10px;">
+                        <button class="quick-cmd" onclick="resetJoysticks()" style="background: #ff4444;">Reset All</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 命令发送 -->
+            <div class="panel">
+                <div class="panel-header">📤 Command</div>
+                <div class="panel-content">
+                    <div class="cmd-input">
+                        <input type="text" id="cmd-input" placeholder="Enter command...">
+                        <button onclick="sendCommand()">Send</button>
+                    </div>
+                    <div class="quick-cmds">
+                        <button class="quick-cmd" onclick="sendQuickCmd('start')">Start</button>
+                        <button class="quick-cmd" onclick="sendQuickCmd('stop')">Stop</button>
+                        <button class="quick-cmd" onclick="sendQuickCmd('reset')">Reset</button>
+                        <button class="quick-cmd" onclick="sendQuickCmd('home')">Home</button>
+                        <button class="quick-cmd" onclick="sendQuickCmd('enable')">Enable</button>
+                        <button class="quick-cmd" onclick="sendQuickCmd('disable')">Disable</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 日志 -->
+            <div class="panel" style="flex: 1;">
+                <div class="panel-header">📋 Log</div>
+                <div class="panel-content">
+                    <div class="log-area" id="log-area"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let ws = null;
+        let reconnectInterval = null;
+        
+        function connect() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
+            
+            ws.onopen = () => {
+                document.getElementById('ws-status').textContent = 'Connected';
+                document.getElementById('status-dot').classList.add('connected');
+                addLog('WebSocket connected', 'success');
+                if (reconnectInterval) {
+                    clearInterval(reconnectInterval);
+                    reconnectInterval = null;
+                }
+            };
+            
+            ws.onclose = () => {
+                document.getElementById('ws-status').textContent = 'Disconnected';
+                document.getElementById('status-dot').classList.remove('connected');
+                addLog('WebSocket disconnected', 'warning');
+                if (!reconnectInterval) {
+                    reconnectInterval = setInterval(connect, 3000);
+                }
+            };
+            
+            ws.onerror = (e) => {
+                addLog('WebSocket error', 'error');
+            };
+            
+            ws.onmessage = (e) => {
+                try {
+                    const data = JSON.parse(e.data);
+                    updateUI(data);
+                } catch (err) {
+                    console.error('Parse error:', err);
+                }
+            };
+        }
+        
+        function updateUI(data) {
+            // Domain ID
+            document.getElementById('domain-id').textContent = data.domain_id;
+            document.getElementById('ctrl-state').textContent = data.controller_state || 'unknown';
+            
+            // IMU
+            if (data.imu_orientation) {
+                document.getElementById('imu-ox').textContent = data.imu_orientation[0].toFixed(4);
+                document.getElementById('imu-oy').textContent = data.imu_orientation[1].toFixed(4);
+                document.getElementById('imu-oz').textContent = data.imu_orientation[2].toFixed(4);
+                document.getElementById('imu-ow').textContent = data.imu_orientation[3].toFixed(4);
+            }
+            if (data.imu_angular_vel) {
+                document.getElementById('imu-wx').textContent = data.imu_angular_vel[0].toFixed(4);
+                document.getElementById('imu-wy').textContent = data.imu_angular_vel[1].toFixed(4);
+                document.getElementById('imu-wz').textContent = data.imu_angular_vel[2].toFixed(4);
+            }
+            if (data.imu_linear_acc) {
+                document.getElementById('imu-ax').textContent = data.imu_linear_acc[0].toFixed(4);
+                document.getElementById('imu-ay').textContent = data.imu_linear_acc[1].toFixed(4);
+                document.getElementById('imu-az').textContent = data.imu_linear_acc[2].toFixed(4);
+            }
+            
+            // Joints
+            if (data.joint_names && data.joint_names.length > 0) {
+                document.getElementById('joint-count').textContent = data.joint_names.length;
+                const tbody = document.getElementById('joint-tbody');
+                tbody.innerHTML = '';
+                for (let i = 0; i < data.joint_names.length; i++) {
+                    const tr = document.createElement('tr');
+                    const pos = data.joint_positions[i] !== undefined ? data.joint_positions[i].toFixed(3) : '--';
+                    const vel = data.joint_velocities[i] !== undefined ? data.joint_velocities[i].toFixed(3) : '--';
+                    tr.innerHTML = `<td>${data.joint_names[i]}</td><td>${pos}</td><td>${vel}</td>`;
+                    tbody.appendChild(tr);
+                }
+            }
+        }
+        
+        function sendJoy(x, y) {
+            document.getElementById('joy-x').textContent = x.toFixed(1);
+            document.getElementById('joy-y').textContent = y.toFixed(1);
+            
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'joy',
+                    axes: [x, y, 0, 0],
+                    buttons: []
+                }));
+            }
+        }
+        
+        function sendCommand() {
+            const input = document.getElementById('cmd-input');
+            const cmd = input.value.trim();
+            if (!cmd) return;
+            
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'command',
+                    command: cmd
+                }));
+                addLog(`Sent: ${cmd}`, 'info');
+                input.value = '';
+            }
+        }
+        
+        function sendQuickCmd(cmd) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'command',
+                    command: cmd
+                }));
+                addLog(`Sent: ${cmd}`, 'info');
+            }
+        }
+        
+        function addLog(msg, type = '') {
+            const area = document.getElementById('log-area');
+            const time = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${time}] ${msg}`;
+            area.appendChild(entry);
+            area.scrollTop = area.scrollHeight;
+            
+            // 限制日志数量
+            while (area.children.length > 100) {
+                area.removeChild(area.firstChild);
+            }
+        }
+        
+        // 键盘控制
+        document.addEventListener('keydown', (e) => {
+            if (document.activeElement.tagName === 'INPUT') return;
+            switch (e.key) {
+                case 'w': case 'ArrowUp': sendJoy(0, 1); break;
+                case 's': case 'ArrowDown': sendJoy(0, -1); break;
+                case 'a': case 'ArrowLeft': sendJoy(-1, 0); break;
+                case 'd': case 'ArrowRight': sendJoy(1, 0); break;
+            }
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            if (document.activeElement.tagName === 'INPUT') return;
+            if (['w', 's', 'a', 'd', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                sendJoy(0, 0);
+            }
+        });
+        
+        // Enter发送命令
+        document.getElementById('cmd-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendCommand();
+        });
+        
+        // 启动
+        connect();
+        addLog('Web Monitor initialized', 'info');
+
+        // ========== 虚拟摇杆 ==========
+        const joyAxes = [0, 0, 0, 0, 0, 0];
+        let joyInterval = null;
+        
+        function initJoystick(areaId, knobId, axisX, axisY) {
+            const area = document.getElementById(areaId);
+            const knob = document.getElementById(knobId);
+            let isDragging = false;
+            const areaRect = { width: 150, height: 150 };
+            const knobSize = 50;
+            const maxOffset = (areaRect.width - knobSize) / 2;
+            
+            function updateKnob(x, y) {
+                // 限制在圆形范围内
+                const dist = Math.sqrt(x * x + y * y);
+                if (dist > maxOffset) {
+                    x = x / dist * maxOffset;
+                    y = y / dist * maxOffset;
+                }
+                
+                knob.style.left = (x + maxOffset) + 'px';
+                knob.style.top = (y + maxOffset) + 'px';
+                
+                // 归一化到 -1 ~ 1
+                joyAxes[axisX] = x / maxOffset;
+                joyAxes[axisY] = -y / maxOffset; // Y轴反转
+                
+                updateJoyDisplay();
+            }
+            
+            function onStart(e) {
+                isDragging = true;
+                knob.classList.add('active');
+                onMove(e);
+            }
+            
+            function onMove(e) {
+                if (!isDragging) return;
+                e.preventDefault();
+                
+                const rect = area.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                
+                const x = clientX - rect.left - areaRect.width / 2;
+                const y = clientY - rect.top - areaRect.height / 2;
+                
+                updateKnob(x, y);
+            }
+            
+            function onEnd() {
+                if (!isDragging) return;
+                isDragging = false;
+                knob.classList.remove('active');
+                
+                // 弹回中心
+                updateKnob(0, 0);
+            }
+            
+            // 鼠标事件
+            area.addEventListener('mousedown', onStart);
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup', onEnd);
+            
+            // 触摸事件
+            area.addEventListener('touchstart', onStart);
+            document.addEventListener('touchmove', onMove);
+            document.addEventListener('touchend', onEnd);
+        }
+        
+        // 初始化两个摇杆
+        initJoystick('joystick-left', 'knob-left', 0, 1);
+        initJoystick('joystick-right', 'knob-right', 2, 3);
+        
+        // 滑块控制
+        for (let i = 0; i < 4; i++) {
+            const slider = document.getElementById(`slider-${i}`);
+            slider.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                joyAxes[i] = val;
+                document.getElementById(`slider-val-${i}`).textContent = val.toFixed(2);
+                updateJoyDisplay();
+            });
+        }
+        
+        function updateJoyDisplay() {
+            document.getElementById('joy-ax0').textContent = joyAxes[0].toFixed(2);
+            document.getElementById('joy-ax1').textContent = joyAxes[1].toFixed(2);
+            document.getElementById('joy-ax2').textContent = joyAxes[2].toFixed(2);
+            document.getElementById('joy-ax3').textContent = joyAxes[3].toFixed(2);
+            
+            // 同步滑块
+            for (let i = 0; i < 4; i++) {
+                document.getElementById(`slider-${i}`).value = joyAxes[i];
+                document.getElementById(`slider-val-${i}`).textContent = joyAxes[i].toFixed(2);
+            }
+        }
+        
+        function resetJoysticks() {
+            for (let i = 0; i < 6; i++) joyAxes[i] = 0;
+            updateJoyDisplay();
+            
+            // 重置摇杆位置
+            document.getElementById('knob-left').style.left = '50px';
+            document.getElementById('knob-left').style.top = '50px';
+            document.getElementById('knob-right').style.left = '50px';
+            document.getElementById('knob-right').style.top = '50px';
+            
+            sendJoyAxes();
+            addLog('Joysticks reset', 'info');
+        }
+        
+        function sendJoyAxes() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'joy',
+                    axes: joyAxes.slice(0, 6),
+                    buttons: []
+                }));
+            }
+        }
+        
+        // 定时发送Joy消息 (20Hz)
+        joyInterval = setInterval(sendJoyAxes, 50);
+        
+        // 键盘控制更新
+        document.addEventListener('keydown', (e) => {
+            if (document.activeElement.tagName === 'INPUT') return;
+            switch (e.key) {
+                case 'w': case 'ArrowUp': joyAxes[1] = 1.0; break;
+                case 's': case 'ArrowDown': joyAxes[1] = -1.0; break;
+                case 'a': case 'ArrowLeft': joyAxes[0] = -1.0; break;
+                case 'd': case 'ArrowRight': joyAxes[0] = 1.0; break;
+            }
+            updateJoyDisplay();
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            if (document.activeElement.tagName === 'INPUT') return;
+            if (['w', 'ArrowUp', 's', 'ArrowDown'].includes(e.key)) joyAxes[1] = 0;
+            if (['a', 'ArrowLeft', 'd', 'ArrowRight'].includes(e.key)) joyAxes[0] = 0;
+            updateJoyDisplay();
+        });
+    </script>
+</body>
+</html>

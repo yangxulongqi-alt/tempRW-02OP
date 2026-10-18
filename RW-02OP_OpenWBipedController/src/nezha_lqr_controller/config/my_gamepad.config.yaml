@@ -1,0 +1,17 @@
+# 手柄配置（X模式， mode-0）
+joy_node:
+  ros__parameters:
+    dev: /dev/input/js0
+    deadzone: 0.05
+    autorepeat_rate: 0.0
+    # 添加你的自定义映射
+    axis_mappings:
+      left_x: 0
+      left_y: 1
+      right_x: 3
+      right_y: 4
+    button_mappings:
+      a: 0
+      b: 1
+      x: 2
+      y: 3

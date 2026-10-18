@@ -1,0 +1,81 @@
+{
+  "motor_mappings": [
+    {"motor_id": 11, "slave_index": 0, "passage": 5},
+    {"motor_id": 12, "slave_index": 0, "passage": 1},
+    {"motor_id": 13, "slave_index": 0, "passage": 4},
+    {"motor_id": 14, "slave_index": 0, "passage": 3},
+    {"motor_id": 15, "slave_index": 0, "passage": 6},
+    {"motor_id": 16, "slave_index": 0, "passage": 2},
+    {"motor_id": 19, "slave_index": 1, "passage": 2},
+    {"motor_id": 20, "slave_index": 1, "passage": 1}
+  ],
+  "motor_currents_limits": {
+    "11": 60,
+    "12": 60,
+    "13": 60,
+    "14": 60,
+    "15": 60,
+    "16": 60,
+    "19": 60,
+    "20": 60
+  },
+  "motor_angle_limits": {
+    "11": [-3.14, 3.14],
+    "12": [-3.14, 3.14],
+    "13": [-3.14, 3.14],
+    "14": [-3.14, 3.14],
+    "15": [-3.14, 3.14],
+    "16": [-3.14, 3.14]
+  },
+  "motor_heat_tables": {
+    "11": [ [55.0, 222.0], [75.0, 63.0] ],
+    "12": [ [60.0, 200.0], [80.0, 50.0] ],
+    "13": [ [55.0, 222.0], [75.0, 63.0] ],
+    "14": [ [60.0, 200.0], [80.0, 50.0] ],
+    "15": [ [55.0, 222.0], [75.0, 63.0] ],
+    "16": [ [60.0, 200.0], [80.0, 50.0] ],
+    "19": [ [55.0, 222.0], [75.0, 63.0] ],
+    "20": [ [60.0, 200.0], [80.0, 50.0] ]
+  },
+  "accumulated_heat_map": {
+    "11": 0.0,
+    "12": 0.0,
+    "13": 0.0,
+    "14": 0.0,
+    "15": 0.0,
+    "16": 0.0,
+    "19": 0.0,
+    "20": 0.0
+  },
+  "kt_table": [
+        {"motor_id": 11, "kt": 2.1},
+        {"motor_id": 12, "kt": 2.1},
+        {"motor_id": 13, "kt": 2.1},
+        {"motor_id": 14, "kt": 2.1},
+        {"motor_id": 15, "kt": 2.1},
+        {"motor_id": 16, "kt": 2.1},
+        {"motor_id": 19, "kt": 2.1},
+        {"motor_id": 20, "kt": 2.1}
+  ],
+  
+  "init_commands": [
+    { "motor_id": 11, "slave_index": 0, "passage": 5, "control_mode": 3, "position": 0, "speed": 0, "torque": 0, "kp": 0, "kd": 0 },
+    { "motor_id": 12, "slave_index": 0, "passage": 1, "control_mode": 3, "position": 0, "speed": 0, "torque": 0, "kp": 0, "kd": 0 },
+    { "motor_id": 13, "slave_index": 0, "passage": 4, "control_mode": 3, "position": 0, "speed": 0, "torque": 0, "kp": 0, "kd": 0 },
+    { "motor_id": 14, "slave_index": 0, "passage": 3, "control_mode": 3, "position": 0, "speed": 0, "torque": 0, "kp": 0, "kd": 0 },
+    { "motor_id": 15, "slave_index": 0, "passage": 6, "control_mode": 3, "position": 0, "speed": 0, "torque": 0, "kp": 0, "kd": 0 },
+    { "motor_id": 16, "slave_index": 0, "passage": 2, "control_mode": 3, "position": 0, "speed": 0, "torque": 0, "kp": 0, "kd": 0 },
+    { "motor_id": 19, "slave_index": 1, "passage": 2, "control_mode": 3, "position": 0, "speed": 0, "torque": 0, "kp": 0, "kd": 0 },
+    { "motor_id": 20, "slave_index": 1, "passage": 1, "control_mode": 3, "position": 0, "speed": 0, "torque": 0, "kp": 0, "kd": 0 }
+  ],
+   "motor_params": [
+    {"motor_id": 11, "max_current": 60, "min_current": -60.0, "max_torque": 90.0, "min_torque": -90.0 },
+    {"motor_id": 12, "max_current": 60, "min_current": -60.0, "max_torque": 90.0, "min_torque": -90.0 },
+    {"motor_id": 13, "max_current": 60, "min_current": -60.0, "max_torque": 90.0, "min_torque": -90.0 },
+    {"motor_id": 14, "max_current": 60, "min_current": -60.0, "max_torque": 90.0, "min_torque": -90.0 },
+    {"motor_id": 15, "max_current": 60, "min_current": -60.0, "max_torque": 90.0, "min_torque": -90.0 },
+    {"motor_id": 16, "max_current": 60, "min_current": -60.0, "max_torque": 90.0, "min_torque": -90.0 },
+    {"motor_id": 19, "max_current": 60, "min_current": -60.0, "max_torque": 90.0, "min_torque": -90.0 },
+    {"motor_id": 20, "max_current": 60, "min_current": -60.0, "max_torque": 90.0, "min_torque": -90.0 }  
+  ]
+}

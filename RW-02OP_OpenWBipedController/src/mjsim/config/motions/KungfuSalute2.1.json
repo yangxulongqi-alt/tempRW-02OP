@@ -1,0 +1,60 @@
+[
+  {
+    "id": "1768872784630",
+    "name": "KongfuSalute2.1",
+    "keyframes": [
+      {
+        "time": 0,
+        "pose": {
+          "joint_left_hip_yaw": 0,
+          "joint_left_hip_roll": 0,
+          "joint_left_hip_pitch": 0,
+          "left_knee": 0,
+          "joint_left_ankle": 0,
+          "joint_right_hip_yaw": 0,
+          "joint_right_hip_roll": 0,
+          "joint_right_hip_pitch": 0,
+          "right_knee": 0,
+          "joint_right_ankle": 0,
+          "joint_head_yaw": 0,
+          "joint_right_shoulder_pitch": 0,
+          "joint_right_shoulder_roll": 0,
+          "joint_right_shoulder_yaw": 0,
+          "joint_right_elbow": 0,
+          "joint_right_wrist": 0,
+          "joint_left_shoulder_pitch": 0,
+          "joint_left_shoulder_roll": 0,
+          "joint_left_shoulder_yaw": 0,
+          "joint_left_elbow": 0,
+          "joint_left_wrist": 0
+        }
+      },
+      {
+        "time": 100,
+        "pose": {
+          "joint_left_hip_yaw": 0,
+          "joint_left_hip_roll": 0,
+          "joint_left_hip_pitch": 0,
+          "left_knee": 0,
+          "joint_left_ankle": 0,
+          "joint_right_hip_yaw": 0.0024,
+          "joint_right_hip_roll": 0,
+          "joint_right_hip_pitch": 0,
+          "right_knee": 0,
+          "joint_right_ankle": 0,
+          "joint_head_yaw": 0,
+          "joint_right_shoulder_pitch": -1.092,
+          "joint_right_shoulder_roll": -0.005,
+          "joint_right_shoulder_yaw": 1.5702,
+          "joint_right_elbow": 1.057,
+          "joint_right_wrist": -0.384,
+          "joint_left_shoulder_pitch": 0.9778,
+          "joint_left_shoulder_roll": 0.172,
+          "joint_left_shoulder_yaw": -1.2408,
+          "joint_left_elbow": -0.788,
+          "joint_left_wrist": 0.303
+        }
+      }
+    ]
+  }
+]
